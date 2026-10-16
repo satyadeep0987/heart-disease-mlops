@@ -1,6 +1,5 @@
 
 """Log the selected model and its metadata to MLflow."""
-
 import argparse
 import hashlib
 import json
@@ -8,9 +7,17 @@ import logging
 import os
 from pathlib import Path
 
+import joblib
 import mlflow
+import mlflow.sklearn
+import pandas as pd
+from mlflow.models import infer_signature
 
 from src.config import PROJECT_ROOT
+from src.models.train import (
+    CATEGORICAL_FEATURES,
+    NUMERIC_FEATURES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +26,7 @@ TUNING_REPORT = PROJECT_ROOT / "reports" / "model_tuning.json"
 EDA_DIR = PROJECT_ROOT / "reports" / "figures"
 
 EXPERIMENT_NAME = "heart-disease-classification"
+REGISTERED_MODEL_NAME = "heart-disease-classifier"
 
 
 def calculate_sha256(path: Path) -> str:
@@ -30,6 +38,50 @@ def calculate_sha256(path: Path) -> str:
             sha.update(chunk)
 
     return sha.hexdigest()
+
+
+def register_selected_model(model_path: Path) -> str:
+    """Log and register the trusted packaged sklearn pipeline."""
+
+    # Load only after the caller has verified the artifact checksum.
+    pipeline = joblib.load(model_path)
+
+    # Example input follows the original training feature schema.
+    sample_path = (
+        PROJECT_ROOT / "data" / "processed" / "heart_clean.csv"
+    )
+
+    if not sample_path.is_file():
+        raise FileNotFoundError(
+            f"Processed dataset required for model signature: {sample_path}"
+        )
+
+    features = NUMERIC_FEATURES + CATEGORICAL_FEATURES
+
+    input_example = pd.read_csv(
+        sample_path,
+        usecols=features,
+        nrows=5,
+    )[features].astype("float64")
+
+    if input_example.empty:
+        raise ValueError("Cannot infer signature from an empty dataset")
+
+    # Validate model loading and prediction.
+    predictions = pipeline.predict(input_example)
+
+    signature = infer_signature(input_example, predictions)
+
+    model_info = mlflow.sklearn.log_model(
+        sk_model=pipeline,
+        name="heart-disease-pipeline",
+        signature=signature,
+        input_example=input_example,
+        registered_model_name=REGISTERED_MODEL_NAME,
+        serialization_format="cloudpickle",
+    )
+
+    return model_info.model_uri
 
 
 def log_selected_model(
@@ -134,6 +186,13 @@ def log_selected_model(
                 str(EDA_DIR),
                 artifact_path="eda",
             )
+
+        model_uri = register_selected_model(model_path)
+
+        mlflow.set_tag("registered_model", REGISTERED_MODEL_NAME)
+        mlflow.set_tag("registered_model_uri", model_uri)
+
+        logger.info("Registered MLflow model URI: %s", model_uri)
 
         logger.info("MLflow run created: %s", run.info.run_id)
 
