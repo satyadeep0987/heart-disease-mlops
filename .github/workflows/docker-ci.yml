@@ -1,0 +1,229 @@
+
+name: MLOps Docker Build and Smoke Test
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "requirements-serving.txt"
+      - "requirements*.txt"
+      - "api/**"
+      - "src/**"
+      - "scripts/check_model_quality.py"
+      - ".github/workflows/docker-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  docker-ci:
+    name: Train, Build and Test Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    env:
+      PYTHONUNBUFFERED: "1"
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      MODEL_SOURCE: local
+      IMAGE_NAME: heart-disease-api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ML dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            -r requirements.txt \
+            -r requirements-data.txt \
+            -r requirements-mlflow.txt
+
+          python -m pip check
+
+      - name: Run data pipeline
+        run: |
+          python -m src.data.pipeline
+
+      - name: Tune models
+        run: |
+          python -m src.models.tune
+
+      - name: Model quality gate
+        run: |
+          python -m scripts.check_model_quality \
+            --report reports/model_tuning.json \
+            --min-roc-auc 0.80
+
+      - name: Package model
+        run: |
+          python -m src.models.package
+
+      - name: Verify model files
+        run: |
+          test -s models/production/model.joblib
+          test -s models/production/model_metadata.json
+
+      - name: Verify serving dependency compatibility
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          metadata = json.loads(
+              Path("models/production/model_metadata.json").read_text()
+          )
+
+          expected = {
+              "scikit-learn": metadata["sklearn_version"],
+              "numpy": metadata["numpy_version"],
+              "pandas": metadata["pandas_version"],
+          }
+
+          requirements = Path("requirements-serving.txt").read_text()
+
+          for package, version in expected.items():
+              requirement = f"{package}=={version}"
+              if requirement not in requirements.splitlines():
+                  print(f"Missing exact serving requirement: {requirement}")
+                  sys.exit(1)
+
+          print("Training and serving versions match")
+          PY
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --platform linux/amd64 \
+            --tag "${IMAGE_NAME}:${GITHUB_SHA}" \
+            .
+
+      - name: Start inference container
+        run: |
+          docker run -d \
+            --name heart-api-test \
+            --platform linux/amd64 \
+            --memory 1g \
+            --cpus 1 \
+            -p 8000:8000 \
+            -e MODEL_SOURCE=local \
+            "${IMAGE_NAME}:${GITHUB_SHA}"
+
+      - name: Wait for readiness
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail \
+              http://127.0.0.1:8000/ready; then
+              echo "API is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs heart-api-test
+          exit 1
+
+      - name: Run API smoke tests
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.request
+
+          base = "http://127.0.0.1:8000"
+
+          def get_json(path):
+              with urllib.request.urlopen(base + path) as response:
+                  assert response.status == 200
+                  return json.load(response)
+
+          assert get_json("/health")["status"] == "healthy"
+          assert get_json("/ready")["status"] == "ready"
+
+          patient = {
+              "age": 52,
+              "sex": 1,
+              "cp": 2,
+              "trestbps": 125,
+              "chol": 212,
+              "fbs": 0,
+              "restecg": 1,
+              "thalach": 168,
+              "exang": 0,
+              "oldpeak": 1.0,
+              "slope": 2,
+              "ca": 2,
+              "thal": 3
+          }
+
+          request = urllib.request.Request(
+              base + "/predict",
+              data=json.dumps(patient).encode(),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+
+          with urllib.request.urlopen(request) as response:
+              assert response.status == 200
+              result = json.load(response)
+
+          assert result["prediction"] in (0, 1)
+          assert 0 <= result["probability_disease"] <= 1
+
+          total_probability = (
+              result["probability_disease"]
+              + result["probability_no_disease"]
+          )
+          assert abs(total_probability - 1.0) < 1e-6
+
+          with urllib.request.urlopen(base + "/metrics") as response:
+              assert response.status == 200
+              metrics = response.read().decode()
+
+          assert "heart_api_requests_total" in metrics
+
+          print("All Docker API smoke tests passed")
+          print("Model:", result["model_name"])
+          print("Version:", result["model_version"])
+          PY
+
+      - name: Capture container logs
+        if: always()
+        run: |
+          mkdir -p reports/docker-ci
+          docker logs heart-api-test \
+            > reports/docker-ci/container.log 2>&1 || true
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-ci-evidence-${{ github.run_id }}
+          path: |
+            reports/docker-ci/
+            reports/model_tuning.json
+            models/production/model_metadata.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Stop container
+        if: always()
+        run: |
+          docker rm -f heart-api-test || true
