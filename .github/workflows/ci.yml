@@ -1,0 +1,78 @@
+
+name: MLOps Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    name: Lint and Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      PYTHONUNBUFFERED: "1"
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            requirements-data.txt
+            requirements-mlflow.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            -r requirements.txt \
+            -r requirements-dev.txt \
+            -r requirements-data.txt \
+            -r requirements-mlflow.txt
+
+      - name: Verify Python environment
+        run: |
+          python --version
+          python -m pip check
+
+      - name: Ruff linting
+        run: python -m ruff check .
+
+      - name: Run Pytest
+        run: |
+          python -m pytest -q \
+            --junitxml=reports/pytest-results.xml
+
+      - name: Compile Python source
+        run: |
+          python -m compileall -q src api scripts
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: reports/pytest-results.xml
+          if-no-files-found: ignore
+          retention-days: 7
