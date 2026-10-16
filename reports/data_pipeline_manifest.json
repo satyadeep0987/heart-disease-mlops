@@ -1,0 +1,22 @@
+{
+  "pipeline": "heart-disease-data-pipeline",
+  "status": "success",
+  "executed_at_utc": "2026-10-16T09:02:01.514005+00:00",
+  "dataset_id": 45,
+  "raw_data": {
+    "path": "/Users/sd/Desktop/heart-disease-mlops/data/raw/heart_uci_raw.csv",
+    "sha256": "c3855e7c0a818f03a1e90e4f23e0ad5d058dfbd1f276f1aab15d1f02693c1d0d",
+    "rows": 303
+  },
+  "processed_data": {
+    "path": "/Users/sd/Desktop/heart-disease-mlops/data/processed/heart_clean.csv",
+    "sha256": "e185aa7d493f97bcc19c257587aad16c7ad5226b5ec61facf75c7acfc9b33c92",
+    "rows": 303,
+    "features": 13
+  },
+  "target_distribution": {
+    "0": 164,
+    "1": 139
+  },
+  "eda_directory": "/Users/sd/Desktop/heart-disease-mlops/reports/figures"
+}
