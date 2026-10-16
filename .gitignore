@@ -26,3 +26,9 @@ models/*.pkl
 
 models/**/*.joblib
 models/**/*.pkl
+
+# MLflow local state
+mlflow.db
+mlflow.db-*
+mlartifacts/
+mlruns/
