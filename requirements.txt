@@ -1,2 +1,5 @@
 # Phase 1 convenience installer; editable project metadata is in pyproject.toml.
 -e .
+fastapi
+uvicorn
+prometheus-client
