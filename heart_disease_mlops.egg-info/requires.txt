@@ -1,0 +1,17 @@
+pandas<3,>=2.2
+numpy<3,>=1.26
+scikit-learn<2,>=1.5
+mlflow<4,>=2.20
+fastapi<1,>=0.115
+uvicorn<1,>=0.34
+pydantic<3,>=2.10
+joblib<2,>=1.4
+requests<3,>=2.32
+matplotlib<4,>=3.9
+seaborn<1,>=0.13
+
+[dev]
+pytest<10,>=8
+ruff<1,>=0.11
+httpx<1,>=0.28
+jupyterlab<5,>=4

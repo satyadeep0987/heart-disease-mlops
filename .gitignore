@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.json.key
+*service-account*.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML artifacts
+mlruns/
+mlartifacts/
+models/*.joblib
+models/*.pkl
+
+# macOS
+.DS_Store
