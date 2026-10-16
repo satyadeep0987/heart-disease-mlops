@@ -23,3 +23,6 @@ models/*.pkl
 
 # macOS
 .DS_Store
+
+models/**/*.joblib
+models/**/*.pkl
