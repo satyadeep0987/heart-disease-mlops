@@ -8,6 +8,11 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from api.model_loader import LoadedModel, load_model
+from api.observability import (
+    configure_logging,
+    metrics_response,
+    observability_middleware,
+)
 from api.schemas import HealthResponse, PatientFeatures, PredictionResponse
 
 logger = logging.getLogger(__name__)
@@ -38,6 +43,15 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+configure_logging()
+
+app.middleware("http")(observability_middleware)
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    return metrics_response()
 
 
 @app.get("/health", response_model=HealthResponse)
