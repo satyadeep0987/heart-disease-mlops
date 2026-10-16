@@ -4,8 +4,9 @@
 import pandas as pd
 import pytest
 
-from src.data.validation import FEATURE_COLUMNS
 from src.models.train import (
+    CATEGORICAL_FEATURES,
+    NUMERIC_FEATURES,
     create_models,
     create_preprocessor,
     load_dataset,
@@ -62,7 +63,9 @@ def test_dataset_split(training_csv):
     assert len(X_test) == 12
     assert len(y_train) == 48
     assert len(y_test) == 12
-    assert list(X_train.columns) == list(FEATURE_COLUMNS)
+    assert list(X_train.columns) == (
+        NUMERIC_FEATURES + CATEGORICAL_FEATURES
+    )
 
 
 def test_model_training(training_csv):
