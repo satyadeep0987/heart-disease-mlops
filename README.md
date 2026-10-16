@@ -1,89 +1,375 @@
-# Heart Disease Prediction — MLOps Assignment 01
+# Heart Disease Prediction — End-to-End MLOps
 
-Production-style learning project for UCI Heart Disease classification. **Phase 1 is scaffolding only**: this ZIP has no downloaded dataset, trained model, live API, CI/CD, or cloud resources yet.
+An end-to-end Machine Learning Operations (MLOps) project for heart disease classification, covering data ingestion, preprocessing, model experimentation, model registry, automated testing, containerization, cloud deployment, and monitoring.
 
-## Architecture roadmap
-UCI data → data validation → EDA → sklearn Pipeline → Logistic Regression / Random Forest → MLflow → FastAPI → Docker → GitHub Actions → Google Artifact Registry → GKE Autopilot → metrics/logs.
+**GitHub Repository:** https://github.com/satyadeep0987/heart-disease-mlops
 
-## MacBook M1 (8 GB RAM, 60 GB free) — lightweight setup
+**Cloud Platform:** Google Cloud Platform (GCP)
 
-**Install now:** Python 3.11 or 3.12, Git, VS Code. Do **not** install Docker Desktop, local Kubernetes, MLflow server, or JupyterLab for Phase 1. Google Cloud resources are not needed until deployment.
+**Deployment Platform:** Google Kubernetes Engine (GKE Autopilot)
 
-In Terminal (from the project root):
+> **Disclaimer:** This project is intended for educational and demonstration purposes. Its predictions are not intended for clinical diagnosis or treatment decisions.
 
-```bash
-uname -m           # should show arm64 on M1
-df -h /
-python3.12 --version
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements-dev.txt
-python -m scripts.check_setup
-python -m pytest -q
-python -m ruff check .
-```
+## 1. Project Overview
 
-If Python 3.12 is not available, install it via `brew install python@3.12`. Keep system Python 3.14 unchanged. Always use the `.venv` interpreter.
+This project demonstrates the complete lifecycle of a machine learning application:
 
-**Install only when needed in later phases:**
+1. Download the UCI Heart Disease dataset.
+2. Validate, preprocess, and analyze the data.
+3. Train and compare Logistic Regression and Random Forest models.
+4. Perform hyperparameter tuning and cross-validation.
+5. Track experiments and register models using MLflow.
+6. Package the selected model as a reproducible artifact.
+7. Serve predictions through a FastAPI REST API.
+8. Automate testing, model training, and Docker builds with GitHub Actions.
+9. Publish verified Docker images to Google Artifact Registry.
+10. Deploy the application on GKE.
+11. Monitor API performance and infrastructure health using Prometheus metrics and Google Cloud Monitoring.
 
-```bash
-# Model experimentation / plots (Phase 2–4)
-python -m pip install -r requirements-ml.txt
+## 2. Technology Stack
 
-# Browser-based EDA notebook, optional (Phase 2)
-python -m pip install -r requirements-notebook.txt
-```
+| Component | Technology |
+|---|---|
+| Programming language | Python 3.12 |
+| Dataset | UCI Heart Disease |
+| Data processing | Pandas, NumPy |
+| Machine learning | Scikit-learn |
+| Experiment tracking | MLflow |
+| Model serialization | Joblib |
+| API framework | FastAPI, Pydantic |
+| Unit testing | Pytest |
+| Linting | Ruff |
+| CI/CD | GitHub Actions |
+| Containerization | Docker |
+| Container registry | Google Artifact Registry |
+| Orchestration | Kubernetes, GKE Autopilot |
+| Monitoring | Prometheus, Google Cloud Monitoring |
+| Logging | Google Cloud Logging |
+| Authentication | GitHub OIDC and Workload Identity Federation |
 
-For a memory-conscious notebook workflow, use VS Code with its Python/Jupyter extensions instead of launching several notebook servers, and close Chrome tabs during model training. Keep cross-validation parallelism at `n_jobs=1` (or at most 2) on an 8 GB M1. Do not run Docker + notebook server + MLflow UI simultaneously when not needed.
+## 3. System Architecture
 
-## GitHub setup
-Create an **empty** GitHub repository named `heart-disease-mlops`, then:
+UCI Dataset → Data Validation → Preprocessing & EDA → Model Training → Hyperparameter Tuning → Quality Gate → Model Packaging → FastAPI → Docker → GitHub Actions → Google Artifact Registry → GKE → Cloud Monitoring
 
-```bash
-git init
-git branch -M main
-git add .
-git commit -m "chore: initialize M1-friendly MLOps scaffold"
-git remote add origin https://github.com/YOUR_USERNAME/heart-disease-mlops.git
-git push -u origin main
-```
+MLflow separately records model experiments, evaluation metrics, artifacts, and registered model versions.
 
-Replace `YOUR_USERNAME`. GitHub authentication must already be configured (SSH or GitHub CLI/credential manager).
+## 4. Project Structure
 
-## Folder responsibilities
-- `src/data/`: dataset download, schema checks and preprocessing (implemented Phase 2–3)
-- `src/models/`: model training, evaluation, inference (Phase 3–4)
-- `notebooks/`: EDA (Phase 2)
-- `api/`: FastAPI endpoints (Phase 5)
-- `tests/`: checks for the source code (expanded phase by phase)
-- `.github/workflows/`: CI and CD (Phase 8+)
-- `deployment/kubernetes/`: GKE manifests (Phase 10)
-- `scripts/`: developer setup / smoke tests
-- `reports/`: chart and report outputs
+    heart-disease-mlops/
+    ├── .github/
+    │   └── workflows/
+    │       ├── ci.yml
+    │       ├── model-training.yml
+    │       ├── docker-ci.yml
+    │       └── gcp-auth-test.yml
+    ├── api/
+    │   ├── main.py
+    │   ├── schemas.py
+    │   ├── model_loader.py
+    │   └── observability.py
+    ├── src/
+    │   ├── data/
+    │   │   ├── download.py
+    │   │   ├── validation.py
+    │   │   ├── preprocessing.py
+    │   │   ├── eda.py
+    │   │   └── pipeline.py
+    │   └── models/
+    │       ├── train.py
+    │       ├── evaluate.py
+    │       ├── tune.py
+    │       ├── package.py
+    │       ├── tracking.py
+    │       └── promote.py
+    ├── k8s/
+    │   ├── deployment.yaml
+    │   ├── service.yaml
+    │   ├── ingress.yaml
+    │   └── podmonitoring.yaml
+    ├── scripts/
+    │   └── check_model_quality.py
+    ├── tests/
+    ├── data/
+    ├── models/
+    │   └── production/
+    ├── reports/
+    ├── Dockerfile
+    ├── requirements.txt
+    ├── requirements-serving.txt
+    └── README.md
 
-## Disk and memory strategy
-- Only create one `.venv` per project; keep MLflow/Jupyter as optional install groups.
-- Keep training and model selection on Mac; let GitHub Actions build the Linux AMD64 Docker image and Google Cloud host GKE.
-- Defer Docker Desktop until Phase 7; on an 8 GB M1, start with **2 GB RAM**, **1–2 CPUs** and **10–15 GB disk limit** if available in your Docker Desktop version. Tune only if necessary.
-- Use Docker `linux/amd64` images for GKE nodes running AMD64. Building them in GitHub Actions avoids ARM emulation overhead on the Mac.
-- Keep 15–20 GB free for macOS swap, updates and development. Never run `docker system prune --volumes` casually—it may delete persisted data.
+Some data, reports, and trained model artifacts are generated at runtime and may be excluded from Git.
 
-## Current Phase 1 exit criteria
-- Python 3.12 `arm64`, `.venv` activated
-- `python -m scripts.check_setup` prints `Setup OK`
-- `python -m pytest -q` passes
-- `python -m ruff check .` passes
-- Initial commit pushed to GitHub
+## 5. Dataset and Preprocessing
 
-Next: Phase 2 — UCI dataset acquisition and validation plus EDA.
+**Source:** UCI Machine Learning Repository, Heart Disease dataset (ID 45).
 
-## Google Cloud architecture (planned, not deployed)
-- GitHub Actions (OIDC / Workload Identity Federation) → Google Artifact Registry → GKE Autopilot → external LoadBalancer → FastAPI.
-- Cloud Logging + Cloud Monitoring for operational monitoring; Prometheus metrics from `/metrics`, dashboard added later.
-- Local MLflow during development; model artifacts are versioned and promoted only after quality gates pass.
-- **Security:** never commit cloud keys or patient data. Use GitHub-to-Google Cloud Workload Identity Federation rather than a long-lived service account JSON key.
-- **Costs:** GKE is not universally free; clusters, pods, networking and load balancers may incur charges. Set billing budgets/alerts and delete unused cluster and load balancer resources.
-- Google Cloud setup and credentials intentionally deferred until deployment phases.
-See `docs/GCP_DEPLOYMENT_PLAN.md` for the roadmap.
+The application uses 13 input features:
+
+`age`, `sex`, `cp`, `trestbps`, `chol`, `fbs`, `restecg`, `thalach`, `exang`, `oldpeak`, `slope`, `ca`, and `thal`.
+
+The original target variable `num` is converted into a binary classification label:
+
+- **0:** No recorded heart disease.
+- **1:** Heart disease present (`num > 0`).
+
+The preprocessing pipeline performs schema validation, data cleaning, missing-value handling, and feature transformations. Training and preprocessing are combined in Scikit-learn pipelines to reduce data leakage.
+
+## 6. Model Training and Evaluation
+
+Two classification algorithms are evaluated:
+
+**Logistic Regression:** Provides a relatively simple, interpretable baseline.
+
+**Random Forest:** Captures nonlinear relationships and feature interactions.
+
+The implementation includes an 80/20 stratified train-test split, five-fold cross-validation, hyperparameter tuning with GridSearchCV, and classification evaluation.
+
+Evaluation includes ROC-AUC, confusion matrices, and other classification metrics.
+
+An automated quality gate requires the configured minimum cross-validation ROC-AUC of **0.80** before packaging.
+
+The exact evaluation results and selected model should be taken from the generated reports and model metadata rather than hardcoded into this document.
+
+## 7. MLflow Experiment Tracking
+
+MLflow provides experiment tracking and model registration.
+
+The implementation supports experiment logging, candidate model evaluation, model artifacts, and registry aliases.
+
+Example local MLflow server:
+
+    mlflow server \
+      --backend-store-uri sqlite:///mlflow.db \
+      --default-artifact-root ./mlartifacts \
+      --host 127.0.0.1 \
+      --port 5000
+
+MLflow interface: http://127.0.0.1:5000
+
+Registered model: `heart-disease-classifier`
+
+Model alias: `candidate`
+
+Production Docker serving defaults to the locally packaged and verified model artifact instead of requiring the MLflow server to remain available.
+
+## 8. Local Setup
+
+**Requirements:** Python 3.12, Git, and Docker.
+
+Clone the repository:
+
+    git clone https://github.com/satyadeep0987/heart-disease-mlops.git
+    cd heart-disease-mlops
+
+Create a Python virtual environment:
+
+    python3.12 -m venv .venv
+    source .venv/bin/activate
+
+Install dependencies using the requirement files maintained in the repository.
+
+Run the data pipeline:
+
+    python -m src.data.pipeline
+
+Train and tune models:
+
+    python -m src.models.train
+    python -m src.models.tune
+
+Package the selected model:
+
+    python -m src.models.package
+
+Run unit tests:
+
+    python -m pytest -q
+
+Run lint checks:
+
+    python -m ruff check .
+
+## 9. FastAPI Model Serving
+
+Start the inference service:
+
+    uvicorn api.main:app --host 127.0.0.1 --port 8000
+
+Available endpoints:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/health` | GET | Application health |
+| `/ready` | GET | Model readiness |
+| `/predict` | POST | Heart disease classification |
+| `/metrics` | GET | Prometheus metrics |
+| `/docs` | GET | Interactive API documentation |
+
+### Prediction request example
+
+    curl -X POST http://127.0.0.1:8000/predict \
+      -H "Content-Type: application/json" \
+      -d '{
+        "age": 52,
+        "sex": 1,
+        "cp": 2,
+        "trestbps": 125,
+        "chol": 212,
+        "fbs": 0,
+        "restecg": 1,
+        "thalach": 168,
+        "exang": 0,
+        "oldpeak": 1.0,
+        "slope": 2,
+        "ca": 2,
+        "thal": 3
+      }'
+
+The response includes the predicted class, class probabilities, and model information.
+
+## 10. Docker Containerization
+
+Build the Docker image after generating the production model artifact:
+
+    docker build -t heart-disease-api:local .
+
+Run locally:
+
+    docker run --rm \
+      -p 8000:8000 \
+      --memory=1g \
+      --cpus=1 \
+      heart-disease-api:local
+
+Test:
+
+    curl http://localhost:8000/health
+
+The container uses Python 3.12, a non-root application user, and a packaged model with integrity verification.
+
+## 11. GitHub Actions CI/CD
+
+GitHub Actions automates:
+
+- Static code checks and unit tests.
+- Data preparation and model training.
+- Hyperparameter tuning and model quality checks.
+- Model packaging.
+- Docker image building and smoke testing.
+- Secure authentication to GCP using Workload Identity Federation.
+- Publishing verified images to Artifact Registry.
+
+The cloud publishing workflow runs from the approved `main` branch.
+
+Service-account JSON private keys are not required for GitHub-to-GCP authentication.
+
+## 12. Google Cloud Deployment
+
+**Project:** `heart-disease-mlops-511812`
+
+**Region:** `asia-south1`
+
+**Artifact Registry repository:** `heart-disease-images`
+
+**GKE cluster:** `heart-disease-gke`
+
+**Kubernetes namespace:** `mlops`
+
+**Deployment:** `heart-disease-api`
+
+**Kubernetes Service:** `heart-disease-service`
+
+**Ingress:** `heart-disease-ingress`
+
+The application is deployed through a Kubernetes Deployment, ClusterIP Service, and GKE Ingress.
+
+The Deployment uses readiness, liveness, and startup probes, resource requests and limits, and an immutable container image digest.
+
+Example deployment commands:
+
+    kubectl apply -f k8s/deployment.yaml
+    kubectl apply -f k8s/service.yaml
+    kubectl apply -f k8s/ingress.yaml
+
+Check deployment:
+
+    kubectl get deployments,pods,services,ingress -n mlops
+
+For local access without a public load balancer:
+
+    kubectl port-forward \
+      -n mlops \
+      service/heart-disease-service \
+      8000:80
+
+The public endpoint is intended only for temporary educational demonstration until HTTPS and authentication are implemented.
+
+## 13. Monitoring and Observability
+
+The application exposes Prometheus metrics including:
+
+- `heart_api_requests_total`
+- `heart_api_request_duration_seconds`
+
+Google Cloud Managed Service for Prometheus collects metrics using `k8s/podmonitoring.yaml`.
+
+The Cloud Monitoring dashboard includes:
+
+1. API request throughput.
+2. API P95 response latency.
+3. HTTP requests over 15 minutes.
+4. GKE container CPU usage.
+5. GKE container memory usage.
+
+Google Cloud Logging captures application and container logs.
+
+An uptime check monitors the `/health` endpoint and provides availability alerts.
+
+The application avoids logging raw patient feature payloads.
+
+## 14. Testing and Quality Assurance
+
+The project uses automated tests and runtime checks covering data validation, preprocessing, model training, packaging, model loading, and API behavior.
+
+GitHub Actions verifies that the built Docker container starts successfully, reports readiness, handles prediction requests, and exposes metrics.
+
+The container's model artifact is checked for integrity before loading.
+
+## 15. Security and Limitations
+
+This is a learning and demonstration deployment, not a production clinical application.
+
+Current limitations include:
+
+- No clinical validation or regulatory approval.
+- Public HTTP Ingress without user authentication.
+- No demonstrated data-drift detection or automatic model retraining based on drift.
+- MLflow experiment registry is local rather than a separately hosted production registry.
+- The model depends on the UCI dataset and should not be assumed to generalize to clinical populations.
+
+Production use would require stronger security, TLS, identity and access controls, monitoring, privacy assessment, data governance, and clinical validation.
+
+## 16. Cost Management and Cleanup
+
+GKE clusters and load balancers can incur charges while active.
+
+Remove the public Ingress after completing the demonstration:
+
+    kubectl delete -f k8s/ingress.yaml
+
+After collecting all deployment evidence, delete the GKE cluster:
+
+    gcloud container clusters delete heart-disease-gke \
+      --project=heart-disease-mlops-511812 \
+      --location=asia-south1
+
+Verify that associated billable infrastructure has also been removed. Google Cloud budget alerts do not automatically stop resource charges.
+
+## 17. Conclusion
+
+This project demonstrates an end-to-end MLOps workflow, from dataset ingestion and machine learning experimentation to containerized model inference on Kubernetes.
+
+It combines reproducible training, automated validation, CI/CD, model artifact management, cloud deployment, logging, metrics, and uptime monitoring into a practical machine learning engineering implementation.
+
+**Status:** Core implementation and cloud monitoring completed; final evaluation evidence, documentation review, and demonstration submission remain to be finalized.
