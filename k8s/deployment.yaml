@@ -1,0 +1,67 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heart-disease-api
+  namespace: mlops
+  labels:
+    app: heart-disease-api
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: heart-disease-api
+
+  template:
+    metadata:
+      labels:
+        app: heart-disease-api
+
+    spec:
+      containers:
+        - name: heart-disease-api
+          image: asia-south1-docker.pkg.dev/heart-disease-mlops-511812/heart-disease-images/heart-disease-api@sha256:e5bc58a6db186d8445371350923c4de44ec41c40083cc7450543417aab1ec370
+
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8000
+              name: http
+
+          env:
+            - name: MODEL_SOURCE
+              value: "local"
+
+            - name: OMP_NUM_THREADS
+              value: "1"
+
+            - name: OPENBLAS_NUM_THREADS
+              value: "1"
+
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              memory: "1Gi"
+
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 5
+            failureThreshold: 24
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
