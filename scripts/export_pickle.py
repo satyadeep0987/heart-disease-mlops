@@ -1,6 +1,7 @@
-import joblib
 import pickle
 from pathlib import Path
+
+import joblib
 
 model_dir = Path("models/production")
 
