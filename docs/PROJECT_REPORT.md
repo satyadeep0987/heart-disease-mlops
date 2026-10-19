@@ -278,6 +278,29 @@ The pipeline contains the following stages:
 
 Cloud authentication uses GitHub OIDC instead of long-lived service-account JSON keys.
 
+
+### CI/CD Pipeline Evidence
+
+The GitHub Actions CI workflow validates code quality
+and executes automated unit tests.
+
+![GitHub CI](evidence/04-cicd/1-github-ci.png)
+
+### Automated Model Training
+
+The model-training workflow performs dataset preprocessing,
+hyperparameter tuning, quality validation and packaging.
+
+![Model Training Pipeline](evidence/04-cicd/2-model-training-workflow.png)
+
+### Docker Container Verification
+
+The Docker workflow builds the inference container,
+tests its endpoints and publishes the verified image.
+
+![Docker CI/CD Pipeline](evidence/04-cicd/3-docker-pipeline.png)
+
+
 ## 11. Cloud Deployment Architecture
 
 **Google Cloud Project:** `heart-disease-mlops-511812`
@@ -326,6 +349,15 @@ The Kubernetes Deployment uses a single initial replica, resource constraints, s
 Container image digests allow the deployed workload to reference an immutable image version.
 
 The external Ingress was verified to return HTTP 200 for `/health` during the deployment demonstration.
+
+
+### Google Artifact Registry Evidence
+
+The verified Docker image is published to Google Artifact
+Registry for deployment on Google Kubernetes Engine.
+
+![Artifact Registry](evidence/04-cicd/4-artifact-registry.png)
+
 
 ## 12. Monitoring and Observability
 
