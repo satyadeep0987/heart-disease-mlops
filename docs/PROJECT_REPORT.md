@@ -89,6 +89,20 @@ Numerical and categorical attributes are handled through preprocessing transform
 
 The resulting preprocessing and classifier are packaged together to support consistent inference behavior.
 
+### Dataset Validation Evidence
+
+The UCI Heart Disease dataset was processed using the
+automated data pipeline.
+
+![Dataset Validation](evidence/01-data/01-dataset-validation.png)
+
+### Exploratory Data Analysis Evidence
+
+Exploratory analysis was performed to examine class
+distribution, feature distributions and relationships.
+
+![EDA Analysis](evidence/01-data/02-eda-analysis.png)
+
 ### 4.3 Data Splitting
 
 The dataset was divided using an 80/20 stratified train-holdout approach, with `random_state = 42`.
@@ -194,6 +208,21 @@ The registered model is named:
 The registry supports a `candidate` alias for referencing a selected model version.
 
 Experiment tracking improves transparency by providing a record of model selection and training configurations.
+
+### MLflow Experiment Tracking Evidence
+
+The MLflow tracking server records the candidate models,
+hyperparameters, and cross-validation results.
+
+![MLflow Experiments](evidence/03-mlflow/1-mlflow-experiments.png)
+
+### Model Registry Evidence
+
+The selected model is registered as
+`heart-disease-classifier`, with the `candidate` alias
+for versioned model access.
+
+![MLflow Model Registry](evidence/03-mlflow/2-model-registry.png)
 
 ## 8. Reproducibility
 
