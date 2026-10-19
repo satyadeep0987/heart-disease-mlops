@@ -12,15 +12,7 @@
       "best_cv_precision": 0.8232210012210011,
       "best_cv_recall": 0.8098814229249012,
       "total_candidates": 6,
-      "cv_folds": 5,
-      "mlflow_run_ids": [
-        "6de9f6263f0c40e590a286f29beeb4b9",
-        "401c6b41ecdd4afe81f62f35113dfe71",
-        "6c9cc16dcff946d6a7494b410cbb1c77",
-        "9c205ed7b01143ff90bd3c8170c7b9dc",
-        "f769686e5034437b83ff43d4f422e328",
-        "08d6b49361034f0199a05a158991630f"
-      ]
+      "cv_folds": 5
     },
     "random_forest": {
       "best_params": {
@@ -33,17 +25,7 @@
       "best_cv_precision": 0.8108776844070962,
       "best_cv_recall": 0.7644268774703556,
       "total_candidates": 8,
-      "cv_folds": 5,
-      "mlflow_run_ids": [
-        "948820b7c6474cfd8fbfcbadc270aa7c",
-        "34d74b19c7824667a5ff0c920dd903da",
-        "1f37e7a94a114d4e80a5a88024bcbfc8",
-        "161bf11485eb43ccaee9b0c579708418",
-        "5dadf6b1e8294dabb091828024b0df6d",
-        "788ad29b1e3245f4a9e2e6d736dc24f3",
-        "365549d6a6d64e7d8478a2a39825c235",
-        "9f62b4071d7e41c39677ad57c24fc6ec"
-      ]
+      "cv_folds": 5
     }
   },
   "dataset_sha256": "e185aa7d493f97bcc19c257587aad16c7ad5226b5ec61facf75c7acfc9b33c92",
