@@ -383,3 +383,27 @@ Kubernetes-hosted API.
 The application exposes Prometheus-compatible request and latency metrics.
 
 Google Cloud Managed Service for Prometheus collects these metrics using
+
+
+### Cloud Monitoring Dashboard Evidence
+
+Google Cloud Monitoring visualizes request throughput,
+API latency, HTTP request volume, and GKE CPU and
+memory consumption.
+
+![Cloud Monitoring Dashboard](evidence/06-monitoring/1-cloud-monitoring.png)
+
+### Application Uptime and Alerting
+
+Google Cloud Monitoring performs periodic HTTP
+availability checks against the application's
+health endpoint.
+
+![Uptime Monitoring](evidence/06-monitoring/2-uptime-alert.png)
+
+### Centralized Application Logging
+
+Google Cloud Logging collects logs emitted by the
+FastAPI application running in the GKE cluster.
+
+![Cloud Logging](evidence/06-monitoring/3-cloud-logging.png)
