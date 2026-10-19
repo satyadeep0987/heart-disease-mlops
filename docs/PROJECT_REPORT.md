@@ -94,14 +94,14 @@ The resulting preprocessing and classifier are packaged together to support cons
 The UCI Heart Disease dataset was processed using the
 automated data pipeline.
 
-![Dataset Validation](evidence/01-data/01-dataset-validation.png)
+![Dataset Validation](evidence/01-data/1-dataset-validation.png)
 
 ### Exploratory Data Analysis Evidence
 
 Exploratory analysis was performed to examine class
 distribution, feature distributions and relationships.
 
-![EDA Analysis](evidence/01-data/02-eda-analysis.png)
+![EDA Analysis](evidence/01-data/2-eda-analysis.png)
 
 ### 4.3 Data Splitting
 

@@ -1,375 +1,732 @@
 # Heart Disease Prediction — End-to-End MLOps
 
-An end-to-end Machine Learning Operations (MLOps) project for heart disease classification, covering data ingestion, preprocessing, model experimentation, model registry, automated testing, containerization, cloud deployment, and monitoring.
+An end-to-end Machine Learning Operations (MLOps) project demonstrating how a machine learning application can be developed, tested, packaged, deployed, and monitored using modern software engineering and cloud-native practices.
 
-**GitHub Repository:** https://github.com/satyadeep0987/heart-disease-mlops
+The project integrates data engineering, machine learning pipelines, experiment tracking, REST API development, automated CI/CD, containerization, Kubernetes orchestration, and cloud observability.
 
-**Cloud Platform:** Google Cloud Platform (GCP)
+**Repository:** [heart-disease-mlops](https://github.com/satyadeep0987/heart-disease-mlops)
 
-**Deployment Platform:** Google Kubernetes Engine (GKE Autopilot)
+> **Disclaimer:** This project is intended for educational and engineering demonstrations. It is not designed or validated for clinical diagnosis or medical decision-making.
 
-> **Disclaimer:** This project is intended for educational and demonstration purposes. Its predictions are not intended for clinical diagnosis or treatment decisions.
+---
 
-## 1. Project Overview
+## 1. System Architecture
 
-This project demonstrates the complete lifecycle of a machine learning application:
+The application follows a modular architecture that separates data processing, model development, model management, inference, deployment, and monitoring.
 
-1. Download the UCI Heart Disease dataset.
-2. Validate, preprocess, and analyze the data.
-3. Train and compare Logistic Regression and Random Forest models.
-4. Perform hyperparameter tuning and cross-validation.
-5. Track experiments and register models using MLflow.
-6. Package the selected model as a reproducible artifact.
-7. Serve predictions through a FastAPI REST API.
-8. Automate testing, model training, and Docker builds with GitHub Actions.
-9. Publish verified Docker images to Google Artifact Registry.
-10. Deploy the application on GKE.
-11. Monitor API performance and infrastructure health using Prometheus metrics and Google Cloud Monitoring.
+```mermaid
+flowchart TD
+    A["UCI Heart Disease Dataset"] --> B["Data Ingestion"]
+    B --> C["Data Validation & Preprocessing"]
+    C --> D["Model Training & Tuning"]
+    D --> E["Model Evaluation & Quality Gate"]
+    E --> F["Reusable Model Artifact"]
 
-## 2. Technology Stack
+    D --> G["MLflow Experiment Tracking"]
+    G --> H["MLflow Model Registry"]
 
-| Component | Technology |
+    F --> I["FastAPI Inference Service"]
+    I --> J["Docker Container"]
+
+    K["GitHub Repository"] --> L["GitHub Actions CI/CD"]
+    L --> D
+    L --> J
+
+    J --> M["Google Artifact Registry"]
+    M --> N["Google Kubernetes Engine"]
+    N --> O["Kubernetes Service & Ingress"]
+    O --> P["API Clients"]
+
+    N --> Q["Cloud Logging"]
+    I --> R["Prometheus Metrics"]
+    R --> S["Google Cloud Monitoring"]
+    N --> S
+```
+
+### Architecture Layers
+
+| Layer | Responsibility | Technologies |
+|---|---|---|
+| Data Engineering | Dataset ingestion, validation, cleaning, EDA | Python, Pandas, NumPy |
+| Machine Learning | Training, evaluation, tuning, model selection | Scikit-learn |
+| Model Management | Experiment tracking, registry, serialization | MLflow, Joblib, Pickle |
+| Application | REST API, request validation, inference | FastAPI, Pydantic |
+| Testing | Unit tests, linting, integration checks | Pytest, Ruff |
+| CI/CD | Automated training, testing, image publishing | GitHub Actions |
+| Containerization | Portable inference environment | Docker |
+| Cloud Deployment | Image storage and container orchestration | Artifact Registry, GKE |
+| Monitoring | Logging, metrics, uptime monitoring | Prometheus, Google Cloud Monitoring |
+
+---
+
+## 2. Project Structure
+
+```text
+heart-disease-mlops/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       ├── model-training.yml
+│       ├── docker-ci.yml
+│       └── gcp-auth-test.yml
+│
+├── api/
+│   ├── main.py
+│   ├── schemas.py
+│   ├── model_loader.py
+│   └── observability.py
+│
+├── src/
+│   ├── data/
+│   │   ├── download.py
+│   │   ├── validation.py
+│   │   ├── preprocessing.py
+│   │   ├── eda.py
+│   │   └── pipeline.py
+│   │
+│   └── models/
+│       ├── train.py
+│       ├── evaluate.py
+│       ├── tune.py
+│       ├── package.py
+│       ├── tracking.py
+│       └── promote.py
+│
+├── models/
+│   └── production/
+│       ├── model.joblib
+│       ├── model.pkl
+│       └── model_metadata.json
+│
+├── scripts/
+│   ├── check_model_quality.py
+│   └── export_pickle.py
+│
+├── tests/
+│
+├── k8s/
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── ingress.yaml
+│   └── podmonitoring.yaml
+│
+├── docs/
+│   ├── PROJECT_REPORT.md
+│   ├── EVIDENCE_INDEX.md
+│   └── evidence/
+│
+├── Dockerfile
+├── .dockerignore
+├── pyproject.toml
+├── requirements-serving.txt
+└── README.md
+```
+
+Generated artifacts and optional files may vary depending on the executed workflows. For example, the Pickle export exists only after running the export script.
+
+### Directory Responsibilities
+
+**`src/data/`** — Handles dataset acquisition, validation, preprocessing, exploratory analysis, and data pipeline orchestration.
+
+**`src/models/`** — Contains the model training, hyperparameter tuning, evaluation, packaging, and experiment tracking logic.
+
+**`api/`** — Implements model inference endpoints, request validation, model loading, and application observability.
+
+**`models/production/`** — Stores the reusable production model and its metadata after packaging.
+
+**`tests/`** — Contains automated tests validating the data pipeline, model components, and API.
+
+**`.github/workflows/`** — Defines automated code validation, model training, Docker verification, and cloud image publishing.
+
+**`k8s/`** — Stores the Kubernetes manifests required to run and monitor the application on GKE.
+
+**`docs/`** — Contains the technical report and supporting project evidence.
+
+---
+
+## 3. Prerequisites
+
+For local development:
+
+- Python 3.12
+- Git
+- Docker
+- A Python-compatible development environment
+
+For cloud deployment:
+
+- Google Cloud project with billing configured
+- Google Cloud CLI (`gcloud`)
+- Kubernetes CLI (`kubectl`)
+- GKE authentication plugin
+- Google Artifact Registry repository
+- GKE cluster
+- GitHub Actions authentication through Workload Identity Federation
+
+## 4. Local Development Setup
+
+### Clone the repository
+
+```bash
+git clone https://github.com/satyadeep0987/heart-disease-mlops.git
+cd heart-disease-mlops
+```
+
+### Create a virtual environment
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+```
+
+For Windows:
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### Install dependencies
+
+The project uses `pyproject.toml` for centralized dependency management.
+
+Install the complete training and development environment:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e ".[training,dev]"
+```
+
+For notebook development:
+
+```bash
+python -m pip install -e ".[training,dev,notebook]"
+```
+
+For application-only development:
+
+```bash
+python -m pip install -e .
+```
+
+Docker uses `requirements-serving.txt` to provide a compatible inference environment for the packaged model.
+
+---
+
+## 5. Data Processing Pipeline
+
+The data pipeline is responsible for downloading the source dataset, validating it, transforming it into a model-ready representation, and generating exploratory analysis artifacts.
+
+### Run the pipeline
+
+```bash
+python -m src.data.pipeline
+```
+
+### Data pipeline execution flow
+
+```mermaid
+flowchart LR
+    A["Download"] --> B["Validate"]
+    B --> C["Preprocess"]
+    C --> D["Processed Dataset"]
+    D --> E["EDA Reports"]
+    D --> F["Model Training"]
+```
+
+### Modules
+
+| Module | Purpose |
 |---|---|
-| Programming language | Python 3.12 |
-| Dataset | UCI Heart Disease |
-| Data processing | Pandas, NumPy |
-| Machine learning | Scikit-learn |
-| Experiment tracking | MLflow |
-| Model serialization | Joblib |
-| API framework | FastAPI, Pydantic |
-| Unit testing | Pytest |
-| Linting | Ruff |
-| CI/CD | GitHub Actions |
-| Containerization | Docker |
-| Container registry | Google Artifact Registry |
-| Orchestration | Kubernetes, GKE Autopilot |
-| Monitoring | Prometheus, Google Cloud Monitoring |
-| Logging | Google Cloud Logging |
-| Authentication | GitHub OIDC and Workload Identity Federation |
+| `download.py` | Retrieves the source dataset |
+| `validation.py` | Checks schema and data quality |
+| `preprocessing.py` | Prepares validated training data |
+| `eda.py` | Generates exploratory visualizations |
+| `pipeline.py` | Orchestrates the complete data workflow |
 
-## 3. System Architecture
+The pipeline can be executed independently of cloud deployment.
 
-UCI Dataset → Data Validation → Preprocessing & EDA → Model Training → Hyperparameter Tuning → Quality Gate → Model Packaging → FastAPI → Docker → GitHub Actions → Google Artifact Registry → GKE → Cloud Monitoring
+---
 
-MLflow separately records model experiments, evaluation metrics, artifacts, and registered model versions.
+## 6. Model Training and Management
 
-## 4. Project Structure
+The model development layer trains and evaluates classification pipelines using Scikit-learn.
 
-    heart-disease-mlops/
-    ├── .github/
-    │   └── workflows/
-    │       ├── ci.yml
-    │       ├── model-training.yml
-    │       ├── docker-ci.yml
-    │       └── gcp-auth-test.yml
-    ├── api/
-    │   ├── main.py
-    │   ├── schemas.py
-    │   ├── model_loader.py
-    │   └── observability.py
-    ├── src/
-    │   ├── data/
-    │   │   ├── download.py
-    │   │   ├── validation.py
-    │   │   ├── preprocessing.py
-    │   │   ├── eda.py
-    │   │   └── pipeline.py
-    │   └── models/
-    │       ├── train.py
-    │       ├── evaluate.py
-    │       ├── tune.py
-    │       ├── package.py
-    │       ├── tracking.py
-    │       └── promote.py
-    ├── k8s/
-    │   ├── deployment.yaml
-    │   ├── service.yaml
-    │   ├── ingress.yaml
-    │   └── podmonitoring.yaml
-    ├── scripts/
-    │   └── check_model_quality.py
-    ├── tests/
-    ├── data/
-    ├── models/
-    │   └── production/
-    ├── reports/
-    ├── Dockerfile
-    ├── requirements.txt
-    ├── requirements-serving.txt
-    └── README.md
+Model selection is based on evaluation criteria implemented by the training workflow.
 
-Some data, reports, and trained model artifacts are generated at runtime and may be excluded from Git.
+### Train baseline models
 
-## 5. Dataset and Preprocessing
+```bash
+python -m src.models.train
+```
 
-**Source:** UCI Machine Learning Repository, Heart Disease dataset (ID 45).
+### Run hyperparameter tuning
 
-The application uses 13 input features:
+```bash
+python -m src.models.tune
+```
 
-`age`, `sex`, `cp`, `trestbps`, `chol`, `fbs`, `restecg`, `thalach`, `exang`, `oldpeak`, `slope`, `ca`, and `thal`.
+### Run the quality gate
 
-The original target variable `num` is converted into a binary classification label:
+```bash
+python -m scripts.check_model_quality
+```
 
-- **0:** No recorded heart disease.
-- **1:** Heart disease present (`num > 0`).
+The quality gate verifies that the selected candidate satisfies the configured acceptance criteria before packaging.
 
-The preprocessing pipeline performs schema validation, data cleaning, missing-value handling, and feature transformations. Training and preprocessing are combined in Scikit-learn pipelines to reduce data leakage.
+### Package the selected model
 
-## 6. Model Training and Evaluation
+```bash
+python -m src.models.package
+```
 
-Two classification algorithms are evaluated:
+The packaged model can then be loaded without repeating the training process.
 
-**Logistic Regression:** Provides a relatively simple, interpretable baseline.
+### Reusable model artifacts
 
-**Random Forest:** Captures nonlinear relationships and feature interactions.
+| Artifact | Purpose |
+|---|---|
+| `model.joblib` | Serialized Scikit-learn preprocessing and classification pipeline |
+| `model.pkl` | Optional Pickle export for Python-based reuse |
+| `model_metadata.json` | Model identity, artifact integrity, environment, and reproducibility metadata |
 
-The implementation includes an 80/20 stratified train-test split, five-fold cross-validation, hyperparameter tuning with GridSearchCV, and classification evaluation.
+The existing inference service loads the Joblib artifact by default.
 
-Evaluation includes ROC-AUC, confusion matrices, and other classification metrics.
+To generate the optional Pickle export:
 
-An automated quality gate requires the configured minimum cross-validation ROC-AUC of **0.80** before packaging.
+```bash
+python scripts/export_pickle.py
+```
 
-The exact evaluation results and selected model should be taken from the generated reports and model metadata rather than hardcoded into this document.
+Only load model artifacts from trusted sources. Pickle and Joblib deserialization can execute arbitrary code.
+
+---
 
 ## 7. MLflow Experiment Tracking
 
-MLflow provides experiment tracking and model registration.
+MLflow provides experiment tracking and model registry capabilities.
 
-The implementation supports experiment logging, candidate model evaluation, model artifacts, and registry aliases.
+The training system can record configurations, evaluation metrics, run information, and model artifacts.
 
-Example local MLflow server:
+### Start the local MLflow server
 
-    mlflow server \
-      --backend-store-uri sqlite:///mlflow.db \
-      --default-artifact-root ./mlartifacts \
-      --host 127.0.0.1 \
-      --port 5000
+```bash
+mlflow server \
+  --backend-store-uri sqlite:///mlflow.db \
+  --default-artifact-root ./mlartifacts \
+  --host 127.0.0.1 \
+  --port 5000
+```
 
-MLflow interface: http://127.0.0.1:5000
+Open:
 
-Registered model: `heart-disease-classifier`
+http://127.0.0.1:5000
 
-Model alias: `candidate`
+### MLflow responsibilities
 
-Production Docker serving defaults to the locally packaged and verified model artifact instead of requiring the MLflow server to remain available.
+- Track model experiments and parameters.
+- Compare training runs.
+- Store model artifacts and metadata.
+- Register versioned models.
+- Support model aliases for identifying candidate versions.
 
-## 8. Local Setup
+The project supports model access through both locally packaged artifacts and the MLflow registry, depending on the configured serving mode.
 
-**Requirements:** Python 3.12, Git, and Docker.
+For the deployed Docker service, the default configuration uses the packaged local artifact so inference does not depend on a continuously running MLflow tracking server.
 
-Clone the repository:
+---
 
-    git clone https://github.com/satyadeep0987/heart-disease-mlops.git
-    cd heart-disease-mlops
+## 8. FastAPI Inference Service
 
-Create a Python virtual environment:
+The application exposes a REST API for consuming the packaged machine learning model.
 
-    python3.12 -m venv .venv
-    source .venv/bin/activate
+### Start the API locally
 
-Install dependencies using the requirement files maintained in the repository.
+Ensure the model has been packaged, then run:
 
-Run the data pipeline:
+```bash
+MODEL_SOURCE=local uvicorn api.main:app \
+  --host 127.0.0.1 \
+  --port 8000
+```
 
-    python -m src.data.pipeline
-
-Train and tune models:
-
-    python -m src.models.train
-    python -m src.models.tune
-
-Package the selected model:
-
-    python -m src.models.package
-
-Run unit tests:
-
-    python -m pytest -q
-
-Run lint checks:
-
-    python -m ruff check .
-
-## 9. FastAPI Model Serving
-
-Start the inference service:
-
-    uvicorn api.main:app --host 127.0.0.1 --port 8000
-
-Available endpoints:
+### API endpoints
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/health` | GET | Application health |
+| `/health` | GET | Service liveness |
 | `/ready` | GET | Model readiness |
-| `/predict` | POST | Heart disease classification |
-| `/metrics` | GET | Prometheus metrics |
+| `/predict` | POST | Model inference |
+| `/metrics` | GET | Prometheus-compatible application metrics |
 | `/docs` | GET | Interactive API documentation |
+| `/openapi.json` | GET | OpenAPI specification |
 
-### Prediction request example
+### Test the API
 
-    curl -X POST http://127.0.0.1:8000/predict \
-      -H "Content-Type: application/json" \
-      -d '{
-        "age": 52,
-        "sex": 1,
-        "cp": 2,
-        "trestbps": 125,
-        "chol": 212,
-        "fbs": 0,
-        "restecg": 1,
-        "thalach": 168,
-        "exang": 0,
-        "oldpeak": 1.0,
-        "slope": 2,
-        "ca": 2,
-        "thal": 3
-      }'
+Health check:
 
-The response includes the predicted class, class probabilities, and model information.
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Readiness check:
+
+```bash
+curl http://127.0.0.1:8000/ready
+```
+
+Prometheus metrics:
+
+```bash
+curl http://127.0.0.1:8000/metrics
+```
+
+### Prediction requests
+
+Open the interactive API documentation:
+
+http://127.0.0.1:8000/docs
+
+Select `POST /predict`, click **Try it out**, and submit a request using the documented input schema.
+
+The API validates the request before passing the input data to the loaded Scikit-learn pipeline.
+
+The model response is returned as structured JSON.
+
+Use synthetic data for demonstrations. This API is not intended for clinical use.
+
+---
+
+## 9. Testing and Code Quality
+
+The project includes automated testing and linting to help detect regressions.
+
+### Run tests
+
+```bash
+python -m pytest -q
+```
+
+### Run Ruff linting
+
+```bash
+python -m ruff check .
+```
+
+### Verify Python modules
+
+```bash
+python -m compileall -q api src scripts
+```
+
+The testing workflow covers the relevant data processing, model and API components.
+
+---
 
 ## 10. Docker Containerization
 
-Build the Docker image after generating the production model artifact:
+Docker packages the inference application, its dependencies, and the selected model into a portable container image.
 
-    docker build -t heart-disease-api:local .
+### Build the image
 
-Run locally:
+Ensure `models/production/model.joblib` and `model_metadata.json` have been generated.
 
-    docker run --rm \
-      -p 8000:8000 \
-      --memory=1g \
-      --cpus=1 \
-      heart-disease-api:local
+```bash
+docker build -t heart-disease-api:local .
+```
 
-Test:
+### Run the container
 
-    curl http://localhost:8000/health
+```bash
+docker run --rm \
+  --name heart-disease-api \
+  -p 8000:8000 \
+  -e MODEL_SOURCE=local \
+  heart-disease-api:local
+```
 
-The container uses Python 3.12, a non-root application user, and a packaged model with integrity verification.
+### Verify the container
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+The container serves the model through the same FastAPI endpoints available during local development.
+
+---
 
 ## 11. GitHub Actions CI/CD
 
-GitHub Actions automates:
+GitHub Actions automates validation and delivery activities across the project lifecycle.
 
-- Static code checks and unit tests.
-- Data preparation and model training.
-- Hyperparameter tuning and model quality checks.
-- Model packaging.
-- Docker image building and smoke testing.
-- Secure authentication to GCP using Workload Identity Federation.
-- Publishing verified images to Artifact Registry.
+### Continuous Integration
 
-The cloud publishing workflow runs from the approved `main` branch.
+**Workflow:** `.github/workflows/ci.yml`
 
-Service-account JSON private keys are not required for GitHub-to-GCP authentication.
+Responsibilities:
+
+- Install development dependencies.
+- Run lint checks.
+- Execute automated tests.
+- Check application source code.
+
+### Model Training
+
+**Workflow:** `.github/workflows/model-training.yml`
+
+Responsibilities:
+
+- Execute the data pipeline.
+- Train candidate models.
+- Perform hyperparameter tuning.
+- Apply the model quality gate.
+- Package the selected model.
+- Upload training and evaluation artifacts.
+
+The training workflow can be triggered manually through GitHub Actions or by configured repository changes.
+
+### Docker CI/CD
+
+**Workflow:** `.github/workflows/docker-ci.yml`
+
+Responsibilities:
+
+- Prepare the model artifact.
+- Build the inference container.
+- Start the container.
+- Execute API smoke tests.
+- Authenticate to Google Cloud.
+- Publish a verified image to Artifact Registry.
+
+### Google Cloud Authentication
+
+GitHub Actions uses **Workload Identity Federation** with OpenID Connect (OIDC).
+
+This avoids storing long-lived Google Cloud service-account private keys in the repository.
+
+```mermaid
+flowchart LR
+    A["GitHub Actions"] --> B["OIDC"]
+    B --> C["Workload Identity Federation"]
+    C --> D["GCP Service Account"]
+    D --> E["Artifact Registry"]
+```
+
+Only authorized workflows matching the configured identity conditions can obtain cloud credentials.
+
+---
 
 ## 12. Google Cloud Deployment
 
-**Project:** `heart-disease-mlops-511812`
+The inference application is deployed using Google Kubernetes Engine Autopilot.
 
-**Region:** `asia-south1`
+### Deployment architecture
 
-**Artifact Registry repository:** `heart-disease-images`
+```mermaid
+flowchart TD
+    A["GitHub Actions"] --> B["Google Artifact Registry"]
+    B --> C["GKE Autopilot"]
+    C --> D["Kubernetes Deployment"]
+    D --> E["Inference Pods"]
+    E --> F["ClusterIP Service"]
+    F --> G["GKE Ingress"]
+    G --> H["API Clients"]
+```
 
-**GKE cluster:** `heart-disease-gke`
+### Cloud resources
 
-**Kubernetes namespace:** `mlops`
+| Resource | Configuration |
+|---|---|
+| GCP project | `heart-disease-mlops-511812` |
+| Region | `asia-south1` |
+| Artifact Registry | `heart-disease-images` |
+| Container image | `heart-disease-api` |
+| GKE cluster | `heart-disease-gke` |
+| Kubernetes namespace | `mlops` |
+| Kubernetes Deployment | `heart-disease-api` |
+| Kubernetes Service | `heart-disease-service` |
+| Kubernetes Ingress | `heart-disease-ingress` |
 
-**Deployment:** `heart-disease-api`
+### Connect to the GKE cluster
 
-**Kubernetes Service:** `heart-disease-service`
+```bash
+gcloud config set project heart-disease-mlops-511812
 
-**Ingress:** `heart-disease-ingress`
+gcloud container clusters get-credentials heart-disease-gke \
+  --project=heart-disease-mlops-511812 \
+  --location=asia-south1
+```
 
-The application is deployed through a Kubernetes Deployment, ClusterIP Service, and GKE Ingress.
+### Deploy the application
 
-The Deployment uses readiness, liveness, and startup probes, resource requests and limits, and an immutable container image digest.
+Ensure `k8s/deployment.yaml` references an image digest that exists in Artifact Registry.
 
-Example deployment commands:
+```bash
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
 
-    kubectl apply -f k8s/deployment.yaml
-    kubectl apply -f k8s/service.yaml
-    kubectl apply -f k8s/ingress.yaml
+Verify:
 
-Check deployment:
+```bash
+kubectl get deployments,pods,services -n mlops
+```
 
-    kubectl get deployments,pods,services,ingress -n mlops
+### Test through port-forward
 
-For local access without a public load balancer:
+```bash
+kubectl port-forward \
+  -n mlops \
+  service/heart-disease-service \
+  8000:80
+```
 
-    kubectl port-forward \
-      -n mlops \
-      service/heart-disease-service \
-      8000:80
+Open:
 
-The public endpoint is intended only for temporary educational demonstration until HTTPS and authentication are implemented.
+http://127.0.0.1:8000/docs
+
+### Configure external access
+
+For a temporary public demonstration:
+
+```bash
+kubectl apply -f k8s/ingress.yaml
+```
+
+Retrieve the Ingress address:
+
+```bash
+kubectl get ingress -n mlops
+```
+
+The demonstration Ingress uses HTTP. Do not expose sensitive patient information or use an unauthenticated public endpoint for real-world workloads. Production access requires HTTPS and appropriate authentication.
+
+---
 
 ## 13. Monitoring and Observability
 
-The application exposes Prometheus metrics including:
+The application supports operational monitoring across the API and Kubernetes infrastructure.
 
-- `heart_api_requests_total`
-- `heart_api_request_duration_seconds`
+### Application Metrics
 
-Google Cloud Managed Service for Prometheus collects metrics using `k8s/podmonitoring.yaml`.
+FastAPI exposes Prometheus-compatible metrics through:
 
-The Cloud Monitoring dashboard includes:
+```text
+GET /metrics
+```
 
-1. API request throughput.
-2. API P95 response latency.
-3. HTTP requests over 15 minutes.
-4. GKE container CPU usage.
-5. GKE container memory usage.
+Metrics include request counts and response-time distributions.
 
-Google Cloud Logging captures application and container logs.
+### Managed Prometheus
 
-An uptime check monitors the `/health` endpoint and provides availability alerts.
+GKE Managed Service for Prometheus discovers the inference workload through:
 
-The application avoids logging raw patient feature payloads.
+`k8s/podmonitoring.yaml`
 
-## 14. Testing and Quality Assurance
+Apply the monitoring resource:
 
-The project uses automated tests and runtime checks covering data validation, preprocessing, model training, packaging, model loading, and API behavior.
+```bash
+kubectl apply -f k8s/podmonitoring.yaml
+```
 
-GitHub Actions verifies that the built Docker container starts successfully, reports readiness, handles prediction requests, and exposes metrics.
+### Google Cloud Monitoring
 
-The container's model artifact is checked for integrity before loading.
+Cloud Monitoring provides visibility into:
 
-## 15. Security and Limitations
+- API traffic.
+- Request latency.
+- HTTP error responses.
+- Container CPU usage.
+- Container memory usage.
+- Application availability.
 
-This is a learning and demonstration deployment, not a production clinical application.
+### Cloud Logging
 
-Current limitations include:
+Application and container logs are available through Google Cloud Logging.
 
-- No clinical validation or regulatory approval.
-- Public HTTP Ingress without user authentication.
-- No demonstrated data-drift detection or automatic model retraining based on drift.
-- MLflow experiment registry is local rather than a separately hosted production registry.
-- The model depends on the UCI dataset and should not be assumed to generalize to clinical populations.
+Logs can be filtered by the Kubernetes namespace and container name.
 
-Production use would require stronger security, TLS, identity and access controls, monitoring, privacy assessment, data governance, and clinical validation.
+### Uptime Monitoring
 
-## 16. Cost Management and Cleanup
+A Cloud Monitoring uptime check can periodically request `/health` and notify operators if the public endpoint becomes unavailable.
 
-GKE clusters and load balancers can incur charges while active.
+Uptime checks validate endpoint reachability, while prediction smoke tests verify the inference behavior.
 
-Remove the public Ingress after completing the demonstration:
+---
 
-    kubectl delete -f k8s/ingress.yaml
+## 14. Documentation and Evidence
 
-After collecting all deployment evidence, delete the GKE cluster:
+Detailed implementation evidence is maintained separately from this README.
 
-    gcloud container clusters delete heart-disease-gke \
-      --project=heart-disease-mlops-511812 \
-      --location=asia-south1
+| Document | Purpose |
+|---|---|
+| `docs/PROJECT_REPORT.md` | Technical methodology, architecture, evaluation and conclusions |
+| `docs/EVIDENCE_INDEX.md` | Index of supporting screenshots |
+| `docs/evidence/` | Screenshots from model development, CI/CD, deployment and monitoring |
 
-Verify that associated billable infrastructure has also been removed. Google Cloud budget alerts do not automatically stop resource charges.
+This separation keeps the README focused on architecture and usage while preserving technical results in the project report.
 
-## 17. Conclusion
+---
 
-This project demonstrates an end-to-end MLOps workflow, from dataset ingestion and machine learning experimentation to containerized model inference on Kubernetes.
+## 15. Resource Cleanup
 
-It combines reproducible training, automated validation, CI/CD, model artifact management, cloud deployment, logging, metrics, and uptime monitoring into a practical machine learning engineering implementation.
+GKE clusters, load balancers and other cloud resources can incur charges.
 
-**Status:** Core implementation and cloud monitoring completed; final evaluation evidence, documentation review, and demonstration submission remain to be finalized.
+Remove the public Ingress when it is no longer needed:
+
+```bash
+kubectl delete -f k8s/ingress.yaml
+```
+
+After completing the demonstration and collecting the required evidence, delete the GKE cluster if you no longer need it:
+
+```bash
+gcloud container clusters delete heart-disease-gke \
+  --project=heart-disease-mlops-511812 \
+  --location=asia-south1
+```
+
+Also review Artifact Registry storage, uptime checks, alert policies and other remaining resources.
+
+Deletion of the cluster does not automatically guarantee that every separately billable resource has been removed.
+
+---
+
+## 16. Security and Operational Considerations
+
+The project demonstrates MLOps practices but is not a production clinical system.
+
+Important considerations include:
+
+- Use trusted, validated model artifacts.
+- Avoid logging raw patient features or sensitive information.
+- Protect publicly accessible inference endpoints.
+- Use HTTPS and authentication for production deployments.
+- Maintain reproducible model environments.
+- Reference immutable container image digests.
+- Review model performance and data drift before real-world use.
+- Apply least-privilege access to CI/CD and cloud resources.
+
+---
+
+## 17. References
+
+- [UCI Machine Learning Repository](https://archive.ics.uci.edu/)
+- [Scikit-learn](https://scikit-learn.org/stable/)
+- [MLflow](https://mlflow.org/docs/latest/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Docker Documentation](https://docs.docker.com/)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Google Artifact Registry](https://cloud.google.com/artifact-registry/docs)
+- [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs)
+- [Google Cloud Monitoring](https://cloud.google.com/monitoring/docs)
+
+---
+
+## Project Summary
+
+This repository demonstrates how to build and operate a machine learning application using an integrated MLOps architecture.
+
+It connects reproducible data pipelines, model training, experiment tracking, reusable artifacts, API serving, automated CI/CD, cloud container deployment, and operational monitoring in a single engineering workflow.
+
+Detailed model evaluation results and execution evidence are maintained in the technical project report rather than this README.
