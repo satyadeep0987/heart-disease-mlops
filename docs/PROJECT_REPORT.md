@@ -359,6 +359,25 @@ Registry for deployment on Google Kubernetes Engine.
 ![Artifact Registry](evidence/04-cicd/4-artifact-registry.png)
 
 
+### Kubernetes Deployment Evidence
+
+The Heart Disease inference application was deployed
+to Google Kubernetes Engine using a Kubernetes Deployment,
+ClusterIP Service, and external Ingress.
+
+![GKE Kubernetes Workloads](evidence/05-deployment/1-gke-workloads.png)
+
+### Cloud-Based Model Inference
+
+A synthetic prediction request was sent to the deployed
+FastAPI application. The response demonstrates that
+the packaged model can perform inference through the
+Kubernetes-hosted API.
+
+![Live Model Prediction](evidence/05-deployment/2-public-api-prediction.png)
+
+
+
 ## 12. Monitoring and Observability
 
 The application exposes Prometheus-compatible request and latency metrics.
