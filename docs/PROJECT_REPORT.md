@@ -209,6 +209,21 @@ The registry supports a `candidate` alias for referencing a selected model versi
 
 Experiment tracking improves transparency by providing a record of model selection and training configurations.
 
+### MLflow Experiment Tracking Evidence
+
+The MLflow tracking server records the candidate models,
+hyperparameters, and cross-validation results.
+
+![MLflow Experiments](evidence/03-mlflow/1-mlflow-experiments.png)
+
+### Model Registry Evidence
+
+The selected model is registered as
+`heart-disease-classifier`, with the `candidate` alias
+for versioned model access.
+
+![MLflow Model Registry](evidence/03-mlflow/2-model-registry.png)
+
 ## 8. Reproducibility
 
 The production model metadata records the following environment:
