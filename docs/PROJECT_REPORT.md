@@ -278,6 +278,29 @@ The pipeline contains the following stages:
 
 Cloud authentication uses GitHub OIDC instead of long-lived service-account JSON keys.
 
+
+### CI/CD Pipeline Evidence
+
+The GitHub Actions CI workflow validates code quality
+and executes automated unit tests.
+
+![GitHub CI](evidence/04-cicd/1-github-ci.png)
+
+### Automated Model Training
+
+The model-training workflow performs dataset preprocessing,
+hyperparameter tuning, quality validation and packaging.
+
+![Model Training Pipeline](evidence/04-cicd/2-model-training-workflow.png)
+
+### Docker Container Verification
+
+The Docker workflow builds the inference container,
+tests its endpoints and publishes the verified image.
+
+![Docker CI/CD Pipeline](evidence/04-cicd/3-docker-pipeline.png)
+
+
 ## 11. Cloud Deployment Architecture
 
 **Google Cloud Project:** `heart-disease-mlops-511812`
@@ -327,8 +350,60 @@ Container image digests allow the deployed workload to reference an immutable im
 
 The external Ingress was verified to return HTTP 200 for `/health` during the deployment demonstration.
 
+
+### Google Artifact Registry Evidence
+
+The verified Docker image is published to Google Artifact
+Registry for deployment on Google Kubernetes Engine.
+
+![Artifact Registry](evidence/04-cicd/4-artifact-registry.png)
+
+
+### Kubernetes Deployment Evidence
+
+The Heart Disease inference application was deployed
+to Google Kubernetes Engine using a Kubernetes Deployment,
+ClusterIP Service, and external Ingress.
+
+![GKE Kubernetes Workloads](evidence/05-deployment/1-gke-workloads.png)
+
+### Cloud-Based Model Inference
+
+A synthetic prediction request was sent to the deployed
+FastAPI application. The response demonstrates that
+the packaged model can perform inference through the
+Kubernetes-hosted API.
+
+![Live Model Prediction](evidence/05-deployment/2-public-api-prediction.png)
+
+
+
 ## 12. Monitoring and Observability
 
 The application exposes Prometheus-compatible request and latency metrics.
 
 Google Cloud Managed Service for Prometheus collects these metrics using
+
+
+### Cloud Monitoring Dashboard Evidence
+
+Google Cloud Monitoring visualizes request throughput,
+API latency, HTTP request volume, and GKE CPU and
+memory consumption.
+
+![Cloud Monitoring Dashboard](evidence/06-monitoring/1-cloud-monitoring.png)
+
+### Application Uptime and Alerting
+
+Google Cloud Monitoring performs periodic HTTP
+availability checks against the application's
+health endpoint.
+
+![Uptime Monitoring](evidence/06-monitoring/2-uptime-alert.png)
+
+### Centralized Application Logging
+
+Google Cloud Logging collects logs emitted by the
+FastAPI application running in the GKE cluster.
+
+![Cloud Logging](evidence/06-monitoring/3-cloud-logging.png)
