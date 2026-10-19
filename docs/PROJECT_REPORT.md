@@ -89,6 +89,20 @@ Numerical and categorical attributes are handled through preprocessing transform
 
 The resulting preprocessing and classifier are packaged together to support consistent inference behavior.
 
+### Dataset Validation Evidence
+
+The UCI Heart Disease dataset was processed using the
+automated data pipeline.
+
+![Dataset Validation](evidence/01-data/01-dataset-validation.png)
+
+### Exploratory Data Analysis Evidence
+
+Exploratory analysis was performed to examine class
+distribution, feature distributions and relationships.
+
+![EDA Analysis](evidence/01-data/02-eda-analysis.png)
+
 ### 4.3 Data Splitting
 
 The dataset was divided using an 80/20 stratified train-holdout approach, with `random_state = 42`.
